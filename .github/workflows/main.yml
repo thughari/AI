@@ -3,6 +3,17 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
+  # Add manual trigger (workflow_dispatch)
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'github-pages'
+        type: choice
+        options:
+        - github-pages
+        - staging
 
 permissions:
   contents: write # This is important for gh-pages deployment
@@ -23,7 +34,7 @@ jobs:
         
       - name: Build
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: npm run build
         
       - name: Deploy
