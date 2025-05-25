@@ -7,7 +7,7 @@ interface SourceLinkPillProps {
 }
 
 const SourceLinkPill: React.FC<SourceLinkPillProps> = ({ source, isUserBubble }) => {
-  // Try to get a more readable title if available, otherwise use hostname
+
   let displayTitle = source.title;
   if (!displayTitle || displayTitle.trim() === '' || displayTitle.startsWith('http')) {
     try {
