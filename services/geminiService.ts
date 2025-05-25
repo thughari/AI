@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse, Chat } from "@google/genai";
 import { AgentResponse, Source } from '../types';
 import { GEMINI_MODEL_NAME } from '../constants';
