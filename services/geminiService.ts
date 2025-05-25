@@ -20,7 +20,7 @@ const SYSTEM_INSTRUCTION = `You are CodeMaster, an expert AI programming assista
 - Maintain a helpful, encouraging, and professional tone.`;
 
 if (!GEMINI_API_KEY) {
-  serviceInitializationError = "API Key not found. Please ensure the API_KEY environment variable is set.";
+  serviceInitializationError = "API Key not found. Please ensure the GEMINI_API_KEY environment variable is set.";
   console.error(serviceInitializationError);
 } else {
   try {
