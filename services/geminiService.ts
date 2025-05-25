@@ -3,7 +3,7 @@ import { GoogleGenAI, GenerateContentResponse, Chat } from "@google/genai";
 import { AgentResponse, Source } from '../types';
 import { GEMINI_MODEL_NAME } from '../constants';
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.GEMINI_API_KEY;
 
 let ai: GoogleGenAI | null = null;
 let chatSession: Chat | null = null;
