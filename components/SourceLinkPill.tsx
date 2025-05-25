@@ -13,7 +13,7 @@ const SourceLinkPill: React.FC<SourceLinkPillProps> = ({ source, isUserBubble })
     try {
       displayTitle = new URL(source.uri).hostname.replace(/^www\./, '');
     } catch (e) {
-      displayTitle = source.uri.substring(0, 30) + (source.uri.length > 30 ? '...' : ''); // Fallback for invalid URLs
+      displayTitle = source.uri.substring(0, 30) + (source.uri.length > 30 ? '...' : '');
     }
   }
 
