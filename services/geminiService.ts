@@ -3,7 +3,7 @@ import { GoogleGenAI, GenerateContentResponse, Chat } from "@google/genai";
 import { AgentResponse, Source } from '../types';
 import { GEMINI_MODEL_NAME } from '../constants';
 
-const API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 let ai: GoogleGenAI | null = null;
 let chatSession: Chat | null = null;
@@ -19,12 +19,12 @@ const SYSTEM_INSTRUCTION = `You are CodeMaster, an expert AI programming assista
 - If you provide multiple approaches, discuss the trade-offs of each.
 - Maintain a helpful, encouraging, and professional tone.`;
 
-if (!API_KEY) {
+if (!GEMINI_API_KEY) {
   serviceInitializationError = "API Key not found. Please ensure the API_KEY environment variable is set.";
   console.error(serviceInitializationError);
 } else {
   try {
-    ai = new GoogleGenAI({ apiKey: API_KEY });
+    ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
     // Initialize the chat session
     chatSession = ai.chats.create({
         model: GEMINI_MODEL_NAME,
@@ -112,7 +112,7 @@ export async function processUserCommand(command: string): Promise<AgentResponse
 
   try {
     const response: GenerateContentResponse = await chatSession.sendMessage({ message: command });
-    const text = response.text; 
+    const text = response.text ?? ""; 
     const sources = extractSources(response);
     return { text, sources };
 
@@ -123,7 +123,7 @@ export async function processUserCommand(command: string): Promise<AgentResponse
         // Check for specific error content related to 500 errors or similar generic server issues
         if (error.message.includes("500") || error.message.toLowerCase().includes("internal error") || error.message.toLowerCase().includes("server error")) {
             errorMessage = "The AI service encountered an internal error. This is usually a temporary issue on the server side. Please try again in a few moments.";
-        } else if (error.message.includes("API key not valid") || error.message.includes("API_KEY_INVALID")) {
+        } else if (error.message.includes("API key not valid") || error.message.includes("GEMINI_API_KEY_INVALID")) {
             errorMessage = "Your API Key is invalid or has expired. Please check your configuration and refresh.";
         } else if (error.message.includes("quota") || (error as any).status === 429) { // Assuming 429 might come as a status property
              errorMessage = "The request quota has been reached or I'm too busy right now. Please try again later.";

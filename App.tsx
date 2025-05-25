@@ -52,7 +52,7 @@ const App: React.FC = () => {
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg relative max-w-lg text-center shadow-md" role="alert">
             <strong className="font-bold text-lg">Initialization Error!</strong>
             <p className="mt-2"> {initializationError}</p>
-            <p className="mt-3 text-sm text-gray-600">Please ensure the API_KEY environment variable is correctly configured and refresh the application.</p>
+            <p className="mt-3 text-sm text-gray-600">Please ensure the GEMINI_API_KEY environment variable is correctly configured and refresh the application.</p>
           </div>
         </div>
       ) : (
