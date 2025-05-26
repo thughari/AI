@@ -1,5 +1,3 @@
-
-
 import React, { useRef, useEffect } from 'react';
 import { ChatMessage, MessageType } from '../types';
 import { UserIcon, BotMessageIcon } from './icons';
@@ -27,95 +25,51 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const formatText = (text: string): { __html: string } => {
     let workText = text;
     const codeBlocks: string[] = [];
-    const codeBlockPlaceholderInternal = "___CODE_BLOCK_PLACEHOLDER___"; 
+    const codeBlockPlaceholder = "___CODE_BLOCK___";
 
-    // 1. Remove the literal "CODEBLOCKPLACEHOLDER" string from AI's output
-    workText = workText.replace(/CODEBLOCKPLACEHOLDER/g, '');
-
-    // 2. Pre-normalize malformed blocks to standard triple-backtick format.
-    // Fix: Simplified comments to prevent parser confusion that might lead to "Cannot find name 'bash'" etc. errors.
-    //    Handles cases like ``lang\ncode\n` (double-backtick start, single-backtick end)
-    workText = workText.replace(/``(\w*)\s*\n([\s\S]+?)\n`/g, (match, lang, code) => {
-      return `\`\`\`${lang || 'text'}\n${code.trim()}\n\`\`\``;
-    });
-    //    Handles cases like `lang\ncode\n` (single-backtick start, single-backtick end, multiline)
-    //    The regex uses ^ for start of line and m flag for multiline matching.
-    workText = workText.replace(/^`(\w*)\s*\n([\s\S]+?)\n`/gm, (match, lang, code) => {
-      return `\`\`\`${lang || 'text'}\n${code.trim()}\n\`\`\``;
-    });
-
-    // 3. Process standard and pre-normalized triple-backtick code blocks
-    // Fix: Ensured regex and string manipulations are correctly interpreted. Errors like "Cannot find name 'w'" for regex characters or "Cannot find name 'div'" for HTML strings
-    // are usually due to the parser being thrown off by an earlier syntax error (like problematic comments).
-    workText = workText.replace(/```(\w*)\n([\s\S]+?)\n```(\s*\n)?/g, (match, lang, rawCodeContentUntrimmed) => {
-      const rawCodeContent = rawCodeContentUntrimmed.trim(); 
-
-      const escapedHtmlCode = rawCodeContent
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-
-      // Escape for use in HTML attribute, using the same trimmed content
-      const escapedAttributeCode = rawCodeContent
-        .replace(/"/g, '&quot;') // Must be first for attributes if content can have quotes
+    // Process code blocks
+    workText = workText.replace(/```(\w*)\n([\s\S]+?)\n```/g, (_, lang, code) => {
+      const rawCode = code.trim(); // Store the raw code before any HTML escaping
+      const cleanCode = code.trim()
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-      const languageClass = lang ? `language-${lang.toLowerCase()}` : 'language-text';
-      
-      const codeBlockHtml = `
+      const htmlBlock = `
         <div class="code-block-container relative group my-2">
           <button 
             class="copy-code-btn absolute top-2 right-2 z-10 bg-gray-700 hover:bg-gray-600 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-150"
-            data-clipboard-text="${escapedAttributeCode}"
+            data-clipboard-text="${rawCode.replace(/"/g, '&quot;')}"
             aria-label="Copy code to clipboard"
             type="button"
           >
             Copy
           </button>
           <pre class="bg-gray-800 text-gray-100 p-3 pl-4 rounded-md overflow-x-auto shadow-sm text-sm pt-8">
-            <code class="block whitespace-pre ${languageClass} font-mono">${escapedHtmlCode}</code>
+            <code class="block whitespace-pre ${lang ? `language-${lang}` : ''}">${cleanCode}</code>
           </pre>
         </div>`;
-      codeBlocks.push(codeBlockHtml);
-      return codeBlockPlaceholderInternal;
+    
+      codeBlocks.push(htmlBlock);
+      return codeBlockPlaceholder;
     });
 
-    // 4. Process other markdown (inline code, bold, italic, newlines)
-    // Fix: Ensured that 'html' variable is correctly initialized from 'workText' before further replacements.
-    // Errors like "Cannot find name 'html'" or arithmetic errors on string ops are symptomatic of earlier parse failures.
-    let html = workText
+    // Process regular text
+    workText = workText
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replace(/`([^`]+)`/g, '<code class="bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
 
-    html = html.replace(/`([^`]+?)`/g, '<code class="bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded text-sm font-mono shadow-sm">$1</code>');
-    html = html.replace(/\*\*(.*?)\*\*|__(.*?)__/g, '<strong>$1$2</strong>');
-    html = html.replace(/\*(.*?)\*|_(.*?)_/g, '<em>$1$2</em>');
-    html = html.replace(/\n/g, '<br />');
+    // Restore code blocks
+    codeBlocks.forEach(block => {
+      workText = workText.replace(codeBlockPlaceholder, block);
+    });
 
-    // Reinsert actual code block HTML
-    // Fix: Ensured 'codeBlocks' and 'codeBlockPlaceholderInternal' are accessible. These errors are also likely due to earlier parse failures.
-    if (codeBlocks.length > 0) {
-      // Handle case where the entire message might be just one code block
-      if (html.trim() === codeBlockPlaceholderInternal && codeBlocks.length === 1) {
-        html = codeBlocks[0];
-      } else {
-        // Using split with a string should be safe for the current placeholder.
-        // If placeholder could contain regex special chars, a RegExp split would be more robust.
-        const parts = html.split(codeBlockPlaceholderInternal);
-        html = parts.reduce((acc, part, i) => {
-          return acc + part + (codeBlocks[i] || '');
-        }, '');
-      }
-    }
-    
-    return { __html: html };
+    return { __html: workText };
   };
 
   useEffect(() => {
