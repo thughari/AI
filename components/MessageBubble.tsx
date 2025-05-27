@@ -109,7 +109,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       button.addEventListener('click', handleClick);
     });
 
-    return () => { // Cleanup
+    return () => {
       copyButtons.forEach(button => {
         button.removeEventListener('click', handleClick);
       });
