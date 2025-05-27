@@ -114,8 +114,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         button.removeEventListener('click', handleClick);
       });
     };
-  // Fix: Ensured message.text and message.id are correctly accessed. Errors here are likely symptoms.
-  }, [message.text, message.id]); // Re-run if message text or ID changes (ID for re-renders)
+  
+  }, [message.text, message.id]); 
 
 
   return (
