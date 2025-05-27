@@ -73,7 +73,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   };
 
   useEffect(() => {
-    // Fix: Ensured contentRef is correctly accessed. Errors here are likely symptoms of component-wide parsing issues.
+    
     const currentContentRef = contentRef.current;
     if (!currentContentRef) return;
 
