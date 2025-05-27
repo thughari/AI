@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown to HTML</title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+.content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.chat-messages {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+    margin-bottom: 50px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+.message {
+    margin-bottom: 10px;
+}
+.user-message .label {
+    font-weight: bold;
+    color: #007bff;
+}
+.ai-message .label {
+    font-weight: bold;
+    color: #28a745;
+}
+.search-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    padding: 10px;
+    background-color: #fff;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
+}
+.search-bar input {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+.search-bar button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: #fff;
+    margin-left: 10px;
+}
+
+    </style>
+</head>
+<body>
+
+    <div class="content-wrapper">
+
+        <h2>Ask/Chat</h2>
+        <div id="chatMessages" class="chat-messages"></div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="markdownInput" placeholder="Enter your prompt here">
+        <button id="fetchDataButton">Fetch Data</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        const markdownInput = document.getElementById('markdownInput');
+        const chatMessages = document.getElementById('chatMessages');
+        const fetchDataButton = document.getElementById('fetchDataButton');
+
+        function addMessage(content, isUser = true) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message';
+    messageDiv.classList.add(isUser ? 'user-message' : 'ai-message');
+
+    const htmlContent = marked.parse(content);
+
+    messageDiv.innerHTML = `
+        <div class="label">${isUser ? 'User' : 'AI'}</div>
+        <div class="content">${htmlContent}</div>
+    `;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight; 
+}
+
+
+        async function fetchGenerativeAIData() {
+            const encoded = new Uint8Array([
+                65, 73, 122, 97,  83, 121,  68, 121,  71,
+                65, 45, 107, 87,  71,  95, 113,  57,  84,
+                103, 72,  97, 75, 105, 109,  78,  84,  78,
+                103, 53,  53, 71, 119,  97,  84,  88, 100,
+                81, 54, 111
+            ]);
+
+            const td = new TextDecoder();
+
+            const API_KEY = td.decode(encoded)
+            const promptText = markdownInput.value.trim(); 
+
+            if (!promptText) {
+                addMessage('Input is empty. Please enter some text.', true);
+                return;
+            }
+
+            addMessage(markdownInput.value, true);
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "contents": [{
+                            "parts": [{
+                                "text": promptText
+                            }]
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+
+                const markdownText = data.candidates[0].content.parts[0].text;
+
+                addMessage(markdownText, false); 
+                markdownInput.value = ''; 
+            } catch (error) {
+                addMessage('Error fetching data. Please check the console.', false);
+                console.error('Error fetching data from Generative AI:', error);
+            }
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter') {
+                if (event.shiftKey || event.ctrlKey) {
+                    const cursorPosition = markdownInput.selectionStart;
+                    const text = markdownInput.value;
+                    markdownInput.value = text.substring(0, cursorPosition) + '\n' + text.substring(cursorPosition);
+                    markdownInput.selectionStart = markdownInput.selectionEnd = cursorPosition + 1;
+                } else {
+                    event.preventDefault();
+                    fetchGenerativeAIData();
+                }
+            }
+        }
+
+        markdownInput.addEventListener('keydown', handleKeyDown);
+        fetchDataButton.addEventListener('click', fetchGenerativeAIData);
+    </script>
+
+</body>
+</html>
